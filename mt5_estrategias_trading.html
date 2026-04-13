@@ -1,0 +1,252 @@
+
+<style>
+  .wrap { padding: 1rem 0; font-family: var(--font-sans); }
+  .filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .btn-f { background: transparent; border: 0.5px solid var(--color-border-secondary); border-radius: 20px; padding: 5px 14px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); transition: all 0.15s; }
+  .btn-f:hover { background: var(--color-background-secondary); }
+  .btn-f.active { background: #185FA5; border-color: #185FA5; color: #fff; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; cursor: pointer; transition: border-color 0.15s; }
+  .card:hover { border-color: var(--color-border-primary); }
+  .card.hidden { display: none; }
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-bottom: 8px; font-weight: 500; }
+  .tag-scalp { background: #FAECE7; color: #993C1D; }
+  .tag-day { background: #E6F1FB; color: #185FA5; }
+  .tag-swing { background: #E1F5EE; color: #0F6E56; }
+  .tag-auto { background: #EEEDFE; color: #534AB7; }
+  .card h3 { font-size: 15px; font-weight: 500; margin: 0 0 6px; color: var(--color-text-primary); }
+  .card p { font-size: 13px; color: var(--color-text-secondary); margin: 0 0 12px; line-height: 1.5; }
+  .meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill { font-size: 11px; padding: 2px 8px; border-radius: 20px; border: 0.5px solid var(--color-border-tertiary); color: var(--color-text-secondary); }
+  .stars { color: #EF9F27; font-size: 12px; }
+  .detail { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-top: 1.5rem; display: none; }
+  .detail.show { display: block; }
+  .detail h2 { font-size: 17px; font-weight: 500; margin: 0 0 8px; color: var(--color-text-primary); }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+  .dcard { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; }
+  .dcard .label { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 4px; }
+  .dcard .val { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .indicadores { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .ind { background: #EEEDFE; color: #534AB7; font-size: 12px; padding: 3px 10px; border-radius: 20px; }
+  .close-btn { float: right; background: transparent; border: none; font-size: 18px; cursor: pointer; color: var(--color-text-secondary); margin-top: -4px; }
+  .ask-btn { margin-top: 12px; background: transparent; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 7px 14px; font-size: 13px; cursor: pointer; color: var(--color-text-secondary); }
+  .ask-btn:hover { background: var(--color-background-secondary); }
+  .bar-wrap { margin: 4px 0; }
+  .bar-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 2px; }
+  .bar { height: 6px; border-radius: 3px; background: var(--color-border-tertiary); overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 3px; }
+</style>
+
+<div class="wrap">
+  <h2 style="sr-only">Painel de estratégias para MT5</h2>
+  <div class="filtros">
+    <button class="btn-f active" onclick="filtrar('todos', this)">Todas</button>
+    <button class="btn-f" onclick="filtrar('scalp', this)">Scalping</button>
+    <button class="btn-f" onclick="filtrar('day', this)">Day Trade</button>
+    <button class="btn-f" onclick="filtrar('swing', this)">Swing Trade</button>
+    <button class="btn-f" onclick="filtrar('auto', this)">Automatizada (EA)</button>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="detail" id="detail"></div>
+</div>
+
+<script>
+const estrategias = [
+  {
+    nome: "Price Action Puro",
+    tipo: "day",
+    tag: "Day Trade",
+    tagClass: "tag-day",
+    desc: "Opera suporte/resistência, candles e estrutura de mercado sem indicadores.",
+    dificuldade: 4,
+    risco: 3,
+    tempo: "1h–4h por dia",
+    timeframe: "M15, H1",
+    winrate: "45–60%",
+    rr: "1:2 a 1:3",
+    indicadores: ["Nível S/R", "Candles japoneses", "Estrutura de mercado"],
+    pros: "Funciona em qualquer ativo. Alta adaptabilidade.",
+    contras: "Curva de aprendizado longa. Subjetivo no início.",
+    color: "#185FA5"
+  },
+  {
+    nome: "Scalping com EMAs",
+    tipo: "scalp",
+    tag: "Scalping",
+    tagClass: "tag-scalp",
+    desc: "Entradas rápidas usando cruzamento de médias exponenciais em M1 e M5.",
+    dificuldade: 3,
+    risco: 5,
+    tempo: "2–5h focado",
+    timeframe: "M1, M5",
+    winrate: "55–70%",
+    rr: "1:1 a 1:1.5",
+    indicadores: ["EMA 9", "EMA 21", "Volume", "RSI"],
+    pros: "Muitas oportunidades por dia. Resultados rápidos.",
+    contras: "Spread impacta muito. Exige disciplina extrema.",
+    color: "#993C1D"
+  },
+  {
+    nome: "Tendência + RSI",
+    tipo: "day",
+    tag: "Day Trade",
+    tagClass: "tag-day",
+    desc: "Opera na direção da tendência e usa RSI para timing de entrada.",
+    dificuldade: 2,
+    risco: 2,
+    tempo: "1–2h por dia",
+    timeframe: "H1, H4",
+    winrate: "50–58%",
+    rr: "1:2",
+    indicadores: ["EMA 200", "RSI 14", "ADX"],
+    pros: "Simples, objetivo e testável. Ótimo para iniciantes.",
+    contras: "Perde trades em mercados laterais.",
+    color: "#185FA5"
+  },
+  {
+    nome: "Swing com Fibonacci",
+    tipo: "swing",
+    tag: "Swing Trade",
+    tagClass: "tag-swing",
+    desc: "Identifica retrações de Fibonacci em H4/D1 para entrar em pullbacks.",
+    dificuldade: 3,
+    risco: 2,
+    tempo: "30 min/dia",
+    timeframe: "H4, D1",
+    winrate: "45–55%",
+    rr: "1:3 a 1:5",
+    indicadores: ["Fibonacci", "EMA 50", "Candle de reversão"],
+    pros: "RR excelente. Pouco tempo na tela.",
+    contras: "Trades demoram dias. Precisa de paciência.",
+    color: "#0F6E56"
+  },
+  {
+    nome: "Breakout de Range",
+    tipo: "day",
+    tag: "Day Trade",
+    tagClass: "tag-day",
+    desc: "Opera o rompimento de consolidações com volume confirmando.",
+    dificuldade: 2,
+    risco: 3,
+    tempo: "2–3h por dia",
+    timeframe: "M30, H1",
+    winrate: "40–50%",
+    rr: "1:2 a 1:4",
+    indicadores: ["Volume", "ATR", "Bollinger Bands"],
+    pros: "Setups claros e visualmente óbvios.",
+    contras: "Muitos falsos rompimentos sem confirmação de volume.",
+    color: "#185FA5"
+  },
+  {
+    nome: "Grid Trading (EA)",
+    tipo: "auto",
+    tag: "Automatizada (EA)",
+    tagClass: "tag-auto",
+    desc: "Expert Advisor que abre ordens em intervalos fixos de preço em ambas direções.",
+    dificuldade: 2,
+    risco: 5,
+    tempo: "VPS 24/7",
+    timeframe: "Qualquer",
+    winrate: "80–95%",
+    rr: "Negativo no longo prazo",
+    indicadores: ["Nenhum (puro preço)"],
+    pros: "Alta taxa de acerto. Opera sozinho.",
+    contras: "RISCO ALTO: drawdown catastrófico em tendência forte.",
+    color: "#534AB7"
+  },
+  {
+    nome: "Momentum + MACD",
+    tipo: "swing",
+    tag: "Swing Trade",
+    tagClass: "tag-swing",
+    desc: "Captura movimentos de momentum usando MACD e volume acumulado.",
+    dificuldade: 2,
+    risco: 2,
+    tempo: "30–60 min/dia",
+    timeframe: "H4, D1",
+    winrate: "50–60%",
+    rr: "1:2 a 1:3",
+    indicadores: ["MACD", "EMA 50/200", "OBV"],
+    pros: "Objetivo. Fácil de automatizar.",
+    contras: "Sinais atrasados. Ruim em mercados laterais.",
+    color: "#0F6E56"
+  },
+  {
+    nome: "EA com Médias (MQL5)",
+    tipo: "auto",
+    tag: "Automatizada (EA)",
+    tagClass: "tag-auto",
+    desc: "Robô criado em MQL5 usando cruzamento de médias com filtros de tendência.",
+    dificuldade: 5,
+    risco: 3,
+    tempo: "VPS 24/7",
+    timeframe: "H1, H4",
+    winrate: "Depende do backtest",
+    rr: "Configurável",
+    indicadores: ["EMA rápida/lenta", "Filtro de horário", "Trailing stop"],
+    pros: "Opera sem emoção. Backtestável no MT5.",
+    contras: "Precisa de programação. Overfitting é armadilha comum.",
+    color: "#534AB7"
+  }
+];
+
+function renderStars(n) {
+  return '★'.repeat(n) + '☆'.repeat(5 - n);
+}
+
+function renderBar(val, color) {
+  return `<div class="bar"><div class="bar-fill" style="width:${val*20}%;background:${color}"></div></div>`;
+}
+
+function filtrar(tipo, btn) {
+  document.querySelectorAll('.btn-f').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.card').forEach(c => {
+    if (tipo === 'todos' || c.dataset.tipo === tipo) c.classList.remove('hidden');
+    else c.classList.add('hidden');
+  });
+  document.getElementById('detail').classList.remove('show');
+}
+
+function mostrarDetalhe(idx) {
+  const e = estrategias[idx];
+  const d = document.getElementById('detail');
+  d.innerHTML = `
+    <button class="close-btn" onclick="document.getElementById('detail').classList.remove('show')">✕</button>
+    <h2>${e.nome}</h2>
+    <p style="font-size:13px;color:var(--color-text-secondary);margin:0 0 12px">${e.pros} <span style="color:var(--color-text-tertiary)">— ${e.contras}</span></p>
+    <div class="detail-grid">
+      <div class="dcard"><div class="label">Timeframe</div><div class="val">${e.timeframe}</div></div>
+      <div class="dcard"><div class="label">Tempo na tela</div><div class="val">${e.tempo}</div></div>
+      <div class="dcard"><div class="label">Win rate estimado</div><div class="val">${e.winrate}</div></div>
+      <div class="dcard"><div class="label">Relação risco/retorno</div><div class="val">${e.rr}</div></div>
+    </div>
+    <div style="margin:10px 0">
+      <div class="bar-label">Dificuldade</div>
+      ${renderBar(e.dificuldade, '#185FA5')}
+      <div class="bar-label" style="margin-top:8px">Risco</div>
+      ${renderBar(e.risco, '#D85A30')}
+    </div>
+    <div class="indicadores">${e.indicadores.map(i => `<span class="ind">${i}</span>`).join('')}</div>
+    <button class="ask-btn" onclick="sendPrompt('Me explica melhor a estratégia ${e.nome} para o MT5, com setup detalhado e gerenciamento de risco') ">Quero saber mais sobre essa estratégia ↗</button>
+  `;
+  d.classList.add('show');
+  d.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+const grid = document.getElementById('grid');
+estrategias.forEach((e, i) => {
+  grid.innerHTML += `
+    <div class="card" data-tipo="${e.tipo}" onclick="mostrarDetalhe(${i})">
+      <span class="tag ${e.tagClass}">${e.tag}</span>
+      <h3>${e.nome}</h3>
+      <p>${e.desc}</p>
+      <div class="meta">
+        <span class="pill">${e.timeframe}</span>
+        <span class="pill">${e.tempo}</span>
+        <span class="pill stars">${renderStars(e.dificuldade)}</span>
+      </div>
+    </div>`;
+});
+</script>
